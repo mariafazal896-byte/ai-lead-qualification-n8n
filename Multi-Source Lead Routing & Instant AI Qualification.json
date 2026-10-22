@@ -1,0 +1,428 @@
+{
+  "name": "Multi-Source Lead Routing & Instant AI Qualification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-capture",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -832,
+        -32
+      ],
+      "id": "69ffc27e-0674-48bc-b7a6-ef0ceecd78ad",
+      "name": "Webhook",
+      "webhookId": "e361159d-c125-4a7d-99f0-ec7705e97394"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ba5301f-091f-40b0-ac1e-06dda6792d3a",
+              "name": "body.name",
+              "value": "={{ $json.body.name }}",
+              "type": "string"
+            },
+            {
+              "id": "81eca153-3f74-4f59-9213-1f5b163cce00",
+              "name": "body.email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "38c6b46e-ebe3-49fe-b9fb-267f0d8b019a",
+              "name": "body.company",
+              "value": "={{ $json.body.company }}",
+              "type": "string"
+            },
+            {
+              "id": "8dea68ae-d834-4e05-afac-0da5ae22aacf",
+              "name": "body.company_size",
+              "value": "={{ $json.body.company_size }}",
+              "type": "string"
+            },
+            {
+              "id": "b9c23b1b-2562-4980-a385-ea32327c2c39",
+              "name": "body.budget",
+              "value": "={{ $json.body.budget }}",
+              "type": "string"
+            },
+            {
+              "id": "29bc14ff-050f-409d-ab0c-7b7f2adcc551",
+              "name": "body.business_need",
+              "value": "={{ $json.body.business_need }}",
+              "type": "string"
+            },
+            {
+              "id": "ccbebc90-30c9-4c94-b7e7-753262010d17",
+              "name": "body.lead_source",
+              "value": "={{ $json.body.lead_source }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -624,
+        -32
+      ],
+      "id": "af3752d1-de28-43e4-a944-56277dd1d82b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI sales lead qualification assistant.\n\nAnalyze the following lead and determine how valuable it may be for the sales team.\n\nLead details:\n- Name: {{ $json.body.name }}\n- Email: {{ $json.body.email }}\n- Company: {{ $json.body.company }}\n- Company size: {{ $json.body.company_size }}\n- Monthly budget: {{ $json.body.budget }}\n- Business need: {{ $json.body.business_need }}\n- Lead source: {{ $json.body.lead_source }}\n\nEvaluate the lead based on company size, budget, and how clearly the business need matches an automation solution.\n\nReturn your answer in valid JSON only, with these exact fields:\n{\n  \"lead_score\": 85,\n  \"qualification\": \"High\",\n  \"reason\": \"The company has a clear automation need and a substantial stated budget.\",\n  \"talking_points\": [\n    \"Ask about their current lead capture process.\",\n    \"Discuss automating lead qualification and follow-ups.\"\n  ]\n}\n\nRules:\n- lead_score must be a number from 1 to 100.\n- qualification must be High, Medium, or Low.\n- High: clear business need and substantial budget.\n- Medium: some potential, but budget or requirements need clarification.\n- Low: unclear need or very limited budget.\n- Give reasons and talking points specific to the supplied lead.\n- Do not invent information that is not provided.\n- Return JSON only, without Markdown fences.",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -416,
+        -32
+      ],
+      "id": "bf16ab90-77b1-4ce4-b098-f34ea2dff659",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        192
+      ],
+      "id": "c1fb207e-6689-47ad-8768-1dbd46fad9fa",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "qVXz6Jx6PfhncUkv",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"lead_score\": {\n      \"type\": \"integer\",\n      \"minimum\": 1,\n      \"maximum\": 100,\n      \"description\": \"Lead qualification score from 1 to 100\"\n    },\n    \"qualification\": {\n      \"type\": \"string\",\n      \"enum\": [\"High\", \"Medium\", \"Low\"],\n      \"description\": \"Overall lead qualification category\"\n    },\n    \"reason\": {\n      \"type\": \"string\",\n      \"description\": \"Explanation for the qualification decision\"\n    },\n    \"talking_points\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"Personalized talking points for the sales team\"\n    }\n  },\n  \"required\": [\n    \"lead_score\",\n    \"qualification\",\n    \"reason\",\n    \"talking_points\"\n  ],\n  \"additionalProperties\": false\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -240,
+        176
+      ],
+      "id": "abd8790d-ecbe-4416-a455-fcce301227d1",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "app4KLqb6h0VBO8aj",
+          "mode": "list",
+          "cachedResultName": "AI Lead Qualification",
+          "cachedResultUrl": "https://airtable.com/app4KLqb6h0VBO8aj"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZSvZToOhAXzYyI",
+          "mode": "list",
+          "cachedResultName": "Automation Leads",
+          "cachedResultUrl": "https://airtable.com/app4KLqb6h0VBO8aj/tblZSvZToOhAXzYyI"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Edit Fields').item.json.body.name }}",
+            "Email": "={{ $('Edit Fields').item.json.body.email }}",
+            "Company": "={{ $('Edit Fields').item.json.body.company }}",
+            "Company Size": "={{ $('Edit Fields').item.json.body.company_size }}",
+            "Monthly Budget": "={{ $('Edit Fields').item.json.body.budget }}",
+            "Lead Source": "={{ $('Edit Fields').item.json.body.lead_source }}",
+            "Lead Score": "={{ $json.output.lead_score }}",
+            "Qualification": "={{ $json.output.qualification }}",
+            "Reason": "={{ $json.output.reason }}",
+            "Talking Points": "={{ $json.output.talking_points.join('\\n') }}",
+            "Business Need Text": "={{ $('Edit Fields').item.json.body.business_need }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Business Need Text",
+              "displayName": "Business Need Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Monthly Budget",
+              "displayName": "Monthly Budget",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Qualification",
+              "displayName": "Qualification",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Low",
+                  "value": "Low"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "High",
+                  "value": "High"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Talking Points",
+              "displayName": "Talking Points",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        -32
+      ],
+      "id": "05944715-d44c-4784-9e98-9b29084e9de7",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "zFEtzKkqgVOOzDOx",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "sales-leads",
+          "mode": "name"
+        },
+        "text": "=🚀 *New AI-Qualified Lead!*\n\n*Name:* {{ $('Edit Fields').item.json.body.name }}\n*Company:* {{ $('Edit Fields').item.json.body.company }}\n*Email:* {{ $('Edit Fields').item.json.body.email }}\n*Company Size:* {{ $('Edit Fields').item.json.body.company_size }}\n*Monthly Budget:* {{ $('Edit Fields').item.json.body.budget }}\n*Business Need:* {{ $('Edit Fields').item.json.body.business_need }}\n\n*Lead Score:* {{ $('AI Agent').item.json.output.lead_score }}/100\n*Qualification:* {{ $('AI Agent').item.json.output.qualification }}\n*Reason:*\n{{ $('AI Agent').item.json.output.reason }}\n\n*Suggested Talking Points:*\n {{ $('AI Agent').item.json.output.talking_points.map((point, i) => `${i + 1}. ${point}`).join('\\n') }}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        144,
+        -32
+      ],
+      "id": "7e58837f-fdb5-4c36-9f41-e67fe0116a97",
+      "name": "Send a message",
+      "webhookId": "e7fbecf3-4920-4be9-805c-8a7087c8a934",
+      "credentials": {
+        "slackApi": {
+          "id": "T8ZntF1BgPqSrlni",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "833e9060-8c87-4d8d-bb3f-15ec553f0a3f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c0676fe979f31bf956e8ec85d83eba42f2b3a53f015fc6c870d3837d0886aa2e"
+  },
+  "id": "bnMMWfiEzML1dje3",
+  "tags": []
+}
